@@ -1,7 +1,9 @@
-import { type ComponentType, type ReactNode } from 'react';
+import { type ReactNode } from 'react';
 import { NavLink } from 'react-router-dom';
+import type { LucideIcon } from 'lucide-react';
 import { ChevronLeft, FolderOpen, LayoutDashboard, LayoutGrid, PieChart, Layers, CalendarClock, ScrollText, BarChart3 } from 'lucide-react';
 import { GrAnalytics } from 'react-icons/gr';
+import type { IconType } from 'react-icons';
 import { cn } from '@/lib/cn';
 import { ROUTES } from '@/lib/routes';
 import { useModules } from '@/state/useModules';
@@ -15,7 +17,7 @@ function NavRow({
   end,
 }: {
   to: string;
-  icon: ComponentType<{ size?: number; className?: string; 'aria-hidden'?: boolean }>;
+  icon: LucideIcon | IconType;
   label: string;
   collapsed: boolean;
   end?: boolean;

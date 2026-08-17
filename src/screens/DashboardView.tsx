@@ -16,7 +16,7 @@ export function DashboardView() {
   const dash = (dashboardId ? byId(dashboardId) : templates[0]) ?? emptyDashboard();
 
   return (
-    <div className="min-h-screen bg-canvas p-6">
+    <div className="h-full overflow-auto bg-canvas p-6">
       <div className="mb-4 flex items-center justify-between">
         <IconButton aria-label="Back to builder" onClick={() => navigate('/builder')}>
           <ArrowLeft size={18} />

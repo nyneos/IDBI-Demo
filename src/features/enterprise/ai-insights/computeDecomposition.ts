@@ -139,7 +139,7 @@ export function candidateDimensions(source: DashboardDataSource, exclude: string
   const keys = new Set<string>();
   for (const d of source.dimensions) if (!exclude.includes(d.key)) keys.add(d.key);
   for (const d of source.profile ?? []) {
-    if (d.role === 'category' && !exclude.includes(d.key)) keys.add(d.key);
+    if (d.role === 'dimension' && !exclude.includes(d.key)) keys.add(d.key);
   }
   return [...keys];
 }

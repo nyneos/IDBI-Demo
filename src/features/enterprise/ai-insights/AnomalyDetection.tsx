@@ -37,7 +37,7 @@ export function AnomalyDetection() {
   }
 
   return (
-    <Panel interactive={false}>
+    <Panel interactive={false} className="h-fit">
       <h2 className="text-lg font-semibold text-content-primary">Anomaly detection</h2>
       <div className="relative mt-4">
         {series.length === 0 ? (

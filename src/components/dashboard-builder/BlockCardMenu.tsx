@@ -1,4 +1,4 @@
-import { useEffect, useId, useLayoutEffect, useRef, useState, type MouseEvent, type PointerEvent } from 'react';
+import { useEffect, useId, useLayoutEffect, useRef, useState, type MouseEvent, type PointerEvent as ReactPointerEvent } from 'react';
 import { createPortal } from 'react-dom';
 import { MoreVertical, Pencil, Route, Trash2 } from 'lucide-react';
 import { IconButton } from '@/components/ui/IconButton';
@@ -36,7 +36,7 @@ export function BlockCardMenu({ onEdit, onRemove, onDrillThrough, drillThroughEn
       setConfirming(false);
       return;
     }
-    const onPointer = (e: PointerEvent) => {
+    const onPointer = (e: globalThis.PointerEvent) => {
       const t = e.target as Node;
       if (rootRef.current?.contains(t) || menuRef.current?.contains(t)) return;
       setOpen(false);
@@ -63,7 +63,7 @@ export function BlockCardMenu({ onEdit, onRemove, onDrillThrough, drillThroughEn
     return () => window.clearTimeout(timer);
   }, [confirming]);
 
-  const stopGrid = (e: MouseEvent | PointerEvent) => {
+  const stopGrid = (e: MouseEvent | ReactPointerEvent) => {
     e.stopPropagation();
   };
 

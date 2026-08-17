@@ -1,5 +1,6 @@
 import { factsOf, oneD } from '@/components/dashboard-builder/blockData';
 import type { DashboardDataSource } from '@/components/dashboard-builder/types';
+import type { RawRecord } from '@/data/pipeline/types';
 import { seriesForGovernedMeasure } from '../semantic-layer/evaluateMeasure';
 import type { GovernedMeasure, MeasureFormat, SemanticCatalog } from '../semantic-layer/types';
 import type { ReportData, ReportSection, ReportTemplate, ResolvedMeasure } from './types';
@@ -143,7 +144,7 @@ export function resolveMeasureByName(
 function columnValue(
   header: string,
   groupKey: string,
-  groupRows: Record<string, string | number | null>[],
+  groupRows: RawRecord[],
 ): string {
   if (header === groupKey || header.replace(/\s+/g, '_') === groupKey) {
     return String(groupRows[0]?.[groupKey] ?? '');
@@ -164,7 +165,7 @@ export function groupAndAggregate(
   columns: string[],
 ): string[][] {
   const rows = factsOf(source);
-  const groups = new Map<string, Record<string, string | number | null>[]>();
+  const groups = new Map<string, RawRecord[]>();
   for (const row of rows) {
     const key = String(row[groupBy] ?? 'Unclassified');
     if (!groups.has(key)) groups.set(key, []);

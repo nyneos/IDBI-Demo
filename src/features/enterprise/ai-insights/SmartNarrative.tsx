@@ -28,7 +28,7 @@ export function SmartNarrative() {
   }
 
   return (
-    <Panel interactive={false}>
+    <Panel interactive={false} className="h-fit">
       <h2 className="text-lg font-semibold text-content-primary">Smart narrative</h2>
       <div className="mt-4">
         <BarChart

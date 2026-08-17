@@ -1,6 +1,7 @@
 import { applyCalculatedField } from '@/data/calculatedFields';
 import { factsOf } from '@/components/dashboard-builder/blockData';
 import type { DashboardDataSource } from '@/components/dashboard-builder/types';
+import type { RawRecord, RawValue } from '@/data/pipeline/types';
 import type { GovernedDimension, GovernedMeasure, MeasureAggregation } from './types';
 
 function num(v: unknown): number {
@@ -21,8 +22,23 @@ function reduce(values: number[], aggregation: MeasureAggregation): number {
 
 const CALC_COL = '__enterprise_measure';
 
+function asCalcRow(row: RawRecord): Record<string, string | number | null> {
+  const out: Record<string, string | number | null> = {};
+  for (const [key, val] of Object.entries(row)) {
+    out[key] = toCalcValue(val);
+  }
+  return out;
+}
+
+function toCalcValue(val: RawValue): string | number | null {
+  if (val == null) return null;
+  if (typeof val === 'boolean') return val ? 1 : 0;
+  if (val instanceof Date) return val.toISOString();
+  return val;
+}
+
 function withMeasureColumn(source: DashboardDataSource, measure: GovernedMeasure) {
-  const facts = factsOf(source).map((r) => ({ ...r }));
+  const facts = factsOf(source).map(asCalcRow);
   if (measure.formula?.trim()) {
     return applyCalculatedField(facts, CALC_COL, measure.formula);
   }

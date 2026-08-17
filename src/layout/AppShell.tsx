@@ -25,7 +25,7 @@ export function AppShell() {
   if (hideChrome) return <Outlet />;
 
   return (
-    <div className="flex h-screen flex-col bg-canvas">
+    <div className="flex h-full flex-col overflow-hidden bg-canvas">
       <TopBar
         collapsed={collapsed}
         onToggleSidebar={() => setCollapsed((c) => !c)}
@@ -34,7 +34,7 @@ export function AppShell() {
       <div className="flex min-h-0 flex-1">
         <Sidebar collapsed={collapsed} onCollapse={() => setCollapsed((c) => !c)} />
         {/* calm = 24px padding (Custom Dashboard); dense ops screens use 24px page pad + 12px internal gaps */}
-        <main className={cn('min-w-0 flex-1 overflow-auto', calm ? 'px-8 pt-8 pb-6' : 'px-6 pt-6 pb-6')}>
+        <main className={cn('min-h-0 min-w-0 flex-1 overflow-auto', calm ? 'px-8 pt-8 pb-8' : 'px-6 pt-6 pb-6')}>
           <LineageSourceObserver />
           <Outlet />
         </main>

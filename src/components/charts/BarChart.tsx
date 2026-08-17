@@ -196,7 +196,7 @@ export function BarChart({
 
   if (orientation === 'horizontal') {
     return wrap(() => (
-          <div className="flex h-full flex-col justify-center gap-2 py-1">
+          <div className="flex flex-col gap-2 py-1">
             {rows.map((row, i) => {
               const color = row.color ?? CATEGORY_COLORS[row.name] ?? 'var(--cat-1)';
               const pct = (row.value / max) * 100;

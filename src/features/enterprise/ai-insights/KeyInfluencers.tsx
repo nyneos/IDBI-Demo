@@ -30,7 +30,7 @@ export function KeyInfluencers() {
   }
 
   return (
-    <Panel interactive={false}>
+    <Panel interactive={false} className="h-fit">
       <h2 className="text-lg font-semibold text-content-primary">Key influencers</h2>
       <div className="mt-4">
         <KeyInfluencersView

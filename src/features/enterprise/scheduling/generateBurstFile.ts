@@ -133,8 +133,8 @@ async function pptxBlob(
   if (keys.length) {
     slide.addTable(
       [
-        keys,
-        ...rows.slice(0, 8).map((r) => keys.map((k) => String(r[k] ?? ''))),
+        keys.map((k) => ({ text: k })),
+        ...rows.slice(0, 8).map((r) => keys.map((k) => ({ text: String(r[k] ?? '') }))),
       ],
       { x: 0.4, y: 1.5, w: 9.2, h: 3.6, fontSize: 10 },
     );

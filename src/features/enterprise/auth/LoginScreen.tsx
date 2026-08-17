@@ -44,8 +44,8 @@ export function LoginScreen() {
   };
 
   return (
-    <div className="flex min-h-screen bg-paper">
-      <div className="flex min-h-screen w-full flex-col lg:w-1/2">
+    <div className="flex h-full overflow-auto bg-paper">
+      <div className="flex min-h-full w-full flex-col lg:w-1/2">
         <header className="px-8 pt-8">
           <LoginBrandHeader />
         </header>

@@ -216,8 +216,8 @@ export default function IntelligenceSunburst() {
             ))}
           </div>
 
-          <div className="grid grid-cols-12 gap-6">
-            <Panel className="col-span-12 flex min-h-[640px] flex-col xl:col-span-8">
+          <div className="grid grid-cols-12 items-start gap-6">
+            <Panel className="col-span-12 flex flex-col xl:col-span-8">
               <div className="mb-3 flex w-full flex-wrap items-center justify-between gap-3">
                 <div>
                   <h2 className="text-xl font-semibold text-content-primary">Transaction Hierarchy</h2>

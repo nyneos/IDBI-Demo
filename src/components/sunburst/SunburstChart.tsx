@@ -91,7 +91,6 @@ export function SunburstChart({
 
   const { arcs, focusValue, byId, centerR } = useSunburstLayout(data, focusId, radius);
 
-  const visibleHighlight = hoveredId;
   const centerArc = hoveredId ? byId.get(hoveredId) : null;
   const centerLabel = centerArc?.name ?? focusLabel;
   const centerValue = centerArc?.value ?? focusValue;

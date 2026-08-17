@@ -10,8 +10,6 @@ import {
   targetValuesForField,
 } from './computeInfluence';
 
-import { ENTERPRISE_FIELD } from '../shared/EnterpriseSection';
-
 export function KeyInfluencersView({
   source,
   targetField,

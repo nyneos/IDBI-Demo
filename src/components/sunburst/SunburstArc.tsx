@@ -38,7 +38,7 @@ export function SunburstArc({
         'focus-visible:stroke-2 focus-visible:stroke-brand',
       )}
       style={{
-        opacity: dimmed ? 0.22 : 1,
+        opacity: dimmed ? 0.22 : emphasized ? 1 : 0.78,
         transitionDuration: `${MOTION.fast}ms`,
       }}
       stroke="var(--bg-surface)"

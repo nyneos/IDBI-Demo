@@ -61,7 +61,9 @@ export async function runSchedule(opts: {
 }
 
 export function nextRunAt(recurrence: ReportSchedule['recurrence'], time: string): Date {
-  const [hh, mm] = time.split(':').map((n) => Number(n) || 0);
+  const parts = time.split(':');
+  const hh = Number(parts[0]) || 0;
+  const mm = Number(parts[1]) || 0;
   const next = new Date();
   next.setSeconds(0, 0);
   next.setHours(hh, mm, 0, 0);
