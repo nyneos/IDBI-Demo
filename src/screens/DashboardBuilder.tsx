@@ -8,7 +8,6 @@ import {
   Pencil,
   Presentation,
   RefreshCw,
-  RotateCcw,
   Route,
   Save,
   Table,
@@ -18,6 +17,7 @@ import { autoArrange } from '@/components/dashboard-builder/autoArrange';
 import { BookmarkPopover } from '@/components/dashboard-builder/BookmarkPopover';
 import { BuilderDrawer } from '@/components/dashboard-builder/BuilderDrawer';
 import { DrillableNavigationWizard } from '@/components/dashboard-builder/DrillableNavigationWizard';
+import { JustAskDialog, NyneOsMark } from '@/components/dashboard-builder/JustAskDialog';
 import { ConfirmDialog } from '@/components/dashboard-builder/ConfirmDialog';
 import { EnableDrillThroughDialog } from '@/components/dashboard-builder/EnableDrillThroughDialog';
 import { DashboardGrid } from '@/components/dashboard-builder/DashboardGrid';
@@ -30,12 +30,18 @@ import { exportBlockDataToExcel } from '@/lib/exportExcel';
 import { exportSectionToPdf } from '@/lib/exportPdf';
 import { exportDashboardToPptx } from '@/lib/exportPptx';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { emptyDashboard, useDashboardState } from '@/state/useDashboardState';
+import { useDashboardState } from '@/state/useDashboardState';
 import { useCustomDashboardDataSource } from '@/state/useCustomDashboardDataSource';
 import { useDashboardFilterState } from '@/state/useDashboardFilterState';
 import { useTemplates } from '@/state/useTemplates';
 import { oneD } from '@/components/dashboard-builder/blockData';
 import { UploadStep } from '@/screens/UploadStep';
+import { cloneDashboard } from '@/features/enterprise/audit/dashboardGovernance';
+import { useDashboardGovernance } from '@/features/enterprise/audit/useDashboardGovernance';
+import { VersionHistoryPanel } from '@/features/enterprise/audit/VersionHistoryPanel';
+import { useEnterpriseSession } from '@/features/enterprise/auth/useEnterpriseSession';
+import { captureFilters, recordLineageBlock } from '@/features/enterprise/lineage/useLineage';
+import { useSemanticLayer } from '@/features/enterprise/semantic-layer/useSemanticLayer';
 
 function newId() {
   return typeof crypto !== 'undefined' && crypto.randomUUID
@@ -54,21 +60,25 @@ export function DashboardWorkspace({
     useDashboardState(initial ?? null, !templateMode);
   const { dataSource: source, setDataSource, clearDataSource } = useCustomDashboardDataSource();
   const { saveAsTemplate, updateTemplate, templates } = useTemplates();
+  const { user } = useEnterpriseSession();
+  const actor = user?.email ?? 'You';
+  const { versions, appendVersion } = useDashboardGovernance(dashboard.id);
+  const { catalog } = useSemanticLayer();
   const toast = useToast();
   const navigate = useNavigate();
   const location = useLocation();
   const drillFrom = (location.state as { parentPath?: string; parentTitle?: string } | null) ?? {};
-  const { activeFilter, clearFilter, drillFilter, setDrillFilter, setSlicer, clearSlicers, bookmarks, addBookmark, applyBookmark } =
+  const { activeFilter, clearFilter, drillFilter, setDrillFilter, setSlicer, clearSlicers, slicers, bookmarks, addBookmark, applyBookmark } =
     useDashboardFilterState();
   const [editing, setEditing] = useState(false);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [editingBlock, setEditingBlock] = useState<DashboardBlock | null>(null);
   const [confirmReplace, setConfirmReplace] = useState(false);
-  const [confirmReset, setConfirmReset] = useState(false);
   const [relocateOpen, setRelocateOpen] = useState(false);
   const [naming, setNaming] = useState(false);
   const [exportOpen, setExportOpen] = useState(false);
   const [navOpen, setNavOpen] = useState(false);
+  const [askOpen, setAskOpen] = useState(false);
   const [drillBlockId, setDrillBlockId] = useState<string | null>(null);
   const addRef = useRef<HTMLButtonElement>(null);
   const triggerRef = useRef<HTMLButtonElement | null>(null);
@@ -83,6 +93,19 @@ export function DashboardWorkspace({
     : editing
       ? 'editing'
       : 'viewing';
+
+  const trackLineage = (id: string, dimensionKey?: string) => {
+    recordLineageBlock(
+      id,
+      catalog.bindings[id]?.measureId ?? null,
+      dimensionKey || null,
+      captureFilters({
+        activeFilter,
+        drillFilter,
+        slicers,
+      }),
+    );
+  };
 
   const linkDrillAndOpen = (
     sourceBlock: DashboardBlock,
@@ -161,6 +184,7 @@ export function DashboardWorkspace({
       updatedAt: Date.now(),
     });
     markSaved();
+    appendVersion(dashboard, actor);
     toast(`Saved as “${name}”`);
   };
 
@@ -168,6 +192,7 @@ export function DashboardWorkspace({
     if (dashboard.isTemplate) {
       updateTemplate(dashboard);
       markSaved();
+      appendVersion(dashboard, actor);
       setEditing(false);
       setDrawerOpen(false);
       toast('Dashboard saved');
@@ -284,6 +309,18 @@ export function DashboardWorkspace({
               Edit dashboard
             </Button>
           ) : null}
+          {source && (status === 'draft' || status === 'editing' || status === 'viewing') ? (
+            <Button
+              variant="secondary"
+              onClick={() => {
+                setAskOpen(true);
+                if (dashboard.isTemplate && status === 'viewing') setEditing(true);
+              }}
+            >
+              <NyneOsMark />
+              Ask NyneOS
+            </Button>
+          ) : null}
           {status === 'editing' ? (
             <>
               <div className="relative">
@@ -326,14 +363,9 @@ export function DashboardWorkspace({
             </Button>
           ) : null}
           {source && (status === 'draft' || status === 'editing') ? (
-            <>
-              <Button variant="secondary" leftIcon={RefreshCw} onClick={() => setConfirmReplace(true)}>
-                Replace Data Source
-              </Button>
-              <Button variant="ghost" leftIcon={RotateCcw} onClick={() => setConfirmReset(true)}>
-                Reset Data
-              </Button>
-            </>
+            <Button variant="secondary" leftIcon={RefreshCw} onClick={() => setConfirmReplace(true)}>
+              Replace Data Source
+            </Button>
           ) : null}
           <BookmarkPopover
             bookmarks={bookmarks.filter((b) => b.dashboardId === dashboard.id)}
@@ -455,6 +487,12 @@ export function DashboardWorkspace({
               >
                 Build this page
               </Button>
+              {source ? (
+                <Button variant="secondary" className="mt-2" onClick={() => setAskOpen(true)}>
+                  <NyneOsMark />
+                  Ask NyneOS
+                </Button>
+              ) : null}
             </div>
           </div>
         ) : (
@@ -462,6 +500,9 @@ export function DashboardWorkspace({
             blocks={dashboard.blocks}
             layout={dashboard.layout}
             dataSource={source}
+            origin={source}
+            dashboardName={pageTitle}
+            catalog={catalog}
             mode={status === 'viewing' ? 'view' : 'edit'}
             onLayoutChange={setLayout}
             onEdit={(id) => {
@@ -474,6 +515,19 @@ export function DashboardWorkspace({
           />
         )}
       </div>
+
+      {source ? (
+        <div className="mt-8">
+          <VersionHistoryPanel
+            dashboardName={pageTitle}
+            versions={versions}
+            onRestore={(version) => {
+              replace(cloneDashboard(version.snapshot));
+              toast(`Restored v${version.version} as the current draft`);
+            }}
+          />
+        </div>
+      ) : null}
 
       {source ? (
         <BuilderDrawer
@@ -512,8 +566,12 @@ export function DashboardWorkspace({
             });
             const packed = autoArrange(sized);
             addBlocks(sized.map((b, i) => ({ ...b, layout: packed[i]! })));
+            for (const b of sized) trackLineage(b.id, b.dimensionKey);
           }}
-          onUpdate={(id, patch) => updateBlock(id, patch)}
+          onUpdate={(id, patch) => {
+            updateBlock(id, patch);
+            trackLineage(id, patch.dimensionKey);
+          }}
           editingBlock={editingBlock}
         />
       ) : null}
@@ -529,18 +587,6 @@ export function DashboardWorkspace({
           clearDataSource();
         }}
       />
-      <ConfirmDialog
-        open={confirmReset}
-        title="Reset data?"
-        message="This clears the current file so you can upload a new Excel or CSV. Custom blocks on this canvas will also be removed."
-        confirmLabel="Reset Data"
-        onCancel={() => setConfirmReset(false)}
-        onConfirm={() => {
-          setConfirmReset(false);
-          clearDataSource();
-          replace(emptyDashboard());
-        }}
-      />
       <DrillableNavigationWizard
         open={navOpen}
         blocks={dashboard.blocks.filter((b) => b.type !== 'div' && b.type !== 'section-title')}
@@ -548,6 +594,37 @@ export function DashboardWorkspace({
         onClose={() => setNavOpen(false)}
         onChooseRecommended={(block, extras) => linkDrillAndOpen(block, extras, false)}
         onChooseManual={(block) => linkDrillAndOpen(block, [], true)}
+      />
+      <JustAskDialog
+        open={askOpen}
+        dataSource={source}
+        onClose={() => setAskOpen(false)}
+        onAdd={(payloads) => {
+          if (!source || payloads.length === 0) return;
+          const sized = payloads.map((b) => {
+            const size = BLOCK_MIN_SIZE[b.type];
+            const id = newId();
+            return {
+              ...b,
+              id,
+              sourceId: source.id,
+              includeInCrossFilter: b.includeInCrossFilter ?? true,
+              layout: {
+                i: id,
+                x: 0,
+                y: Number.NaN,
+                w: b.layout?.w ?? size.w,
+                h: b.layout?.h ?? size.h,
+                minW: size.minW,
+                minH: size.minH,
+              },
+            };
+          });
+          addBlocks(sized);
+          for (const b of sized) trackLineage(b.id, b.dimensionKey);
+          if (dashboard.isTemplate) setEditing(true);
+          toast(payloads.length === 1 ? `Added “${payloads[0]!.title}”` : `Added ${payloads.length} charts`);
+        }}
       />
       <EnableDrillThroughDialog
         open={Boolean(drillBlockId)}

@@ -83,11 +83,7 @@ export function UploadStep({
   };
 
   if (busy) {
-    return (
-      <div className="mx-auto flex w-full max-w-xl flex-col items-center">
-        <AnalyzeOverlay progress={progress} />
-      </div>
-    );
+    return <AnalyzeOverlay progress={progress} />;
   }
 
   return (

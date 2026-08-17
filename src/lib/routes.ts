@@ -7,4 +7,9 @@ export const ROUTES = {
   modules: '/settings/modules',
   upload: '/upload',
   view: '/view',
+  semanticLayer: '/semantic-layer',
+  scheduledReports: '/scheduled-reports',
+  audit: '/audit',
+  reportDesigner: '/report-designer',
+  aiInsights: '/ai-insights',
 } as const;

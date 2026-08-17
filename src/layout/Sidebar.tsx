@@ -1,7 +1,7 @@
-import { type ReactNode } from 'react';
+import { type ComponentType, type ReactNode } from 'react';
 import { NavLink } from 'react-router-dom';
-import type { LucideIcon } from 'lucide-react';
-import { ChevronLeft, FolderOpen, LayoutDashboard, LayoutGrid, PieChart } from 'lucide-react';
+import { ChevronLeft, FolderOpen, LayoutDashboard, LayoutGrid, PieChart, Layers, CalendarClock, ScrollText, BarChart3 } from 'lucide-react';
+import { GrAnalytics } from 'react-icons/gr';
 import { cn } from '@/lib/cn';
 import { ROUTES } from '@/lib/routes';
 import { useModules } from '@/state/useModules';
@@ -15,7 +15,7 @@ function NavRow({
   end,
 }: {
   to: string;
-  icon: LucideIcon;
+  icon: ComponentType<{ size?: number; className?: string; 'aria-hidden'?: boolean }>;
   label: string;
   collapsed: boolean;
   end?: boolean;
@@ -100,6 +100,11 @@ export function Sidebar({
             collapsed={collapsed}
           />
           <NavRow to={ROUTES.myTemplates} icon={FolderOpen} label="My Templates" collapsed={collapsed} />
+          <NavRow to={ROUTES.semanticLayer} icon={Layers} label="Semantic Layer" collapsed={collapsed} />
+          <NavRow to={ROUTES.scheduledReports} icon={CalendarClock} label="Scheduled Reports" collapsed={collapsed} />
+          <NavRow to={ROUTES.audit} icon={ScrollText} label="Audit Log" collapsed={collapsed} />
+          <NavRow to={ROUTES.reportDesigner} icon={BarChart3} label="Report Designer" collapsed={collapsed} />
+          <NavRow to={ROUTES.aiInsights} icon={GrAnalytics} label="AI Insights" collapsed={collapsed} />
         </SidebarSection>
 
         {activeModule ? (

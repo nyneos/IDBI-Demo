@@ -13,6 +13,14 @@ import { ModulesProvider } from '@/state/useModules';
 import { TemplatesProvider } from '@/state/useTemplates';
 import { ThemeProvider } from '@/theme/ThemeProvider';
 import { PreferencesProvider } from '@/theme/usePreferences';
+import { EnterpriseRoutes } from '@/features/enterprise/EnterpriseRoutes';
+import { EnterpriseSessionProvider } from '@/features/enterprise/auth/useEnterpriseSession';
+import { SemanticLayerProvider } from '@/features/enterprise/semantic-layer/useSemanticLayer';
+import { SemanticLayerScreen } from '@/features/enterprise/semantic-layer/SemanticLayerScreen';
+import { ScheduledReportsScreen } from '@/features/enterprise/scheduling/ScheduledReportsScreen';
+import { AuditLogScreen } from '@/features/enterprise/audit/AuditLogScreen';
+import { ReportDesignerScreen } from '@/features/enterprise/report-designer/ReportDesignerScreen';
+import { AiInsightsScreen } from '@/features/enterprise/ai-insights/AiInsightsScreen';
 
 function RoutedApp() {
   return (
@@ -30,9 +38,15 @@ function RoutedApp() {
         <Route path="/builder/:dashboardId" element={<DashboardBuilder />} />
         <Route path="/dashboard/:id" element={<TemplateDashboard />} />
         <Route path={ROUTES.upload} element={<Navigate to={ROUTES.customDashboard} replace />} />
+        <Route path={ROUTES.semanticLayer} element={<SemanticLayerScreen />} />
+        <Route path={ROUTES.scheduledReports} element={<ScheduledReportsScreen />} />
+        <Route path={ROUTES.audit} element={<AuditLogScreen />} />
+        <Route path={ROUTES.reportDesigner} element={<ReportDesignerScreen />} />
+        <Route path={ROUTES.aiInsights} element={<AiInsightsScreen />} />
       </Route>
       <Route path="/view" element={<DashboardView />} />
       <Route path="/view/:dashboardId" element={<DashboardView />} />
+      <Route path="/enterprise/*" element={<EnterpriseRoutes />} />
     </Routes>
   );
 }
@@ -45,9 +59,13 @@ export default function App() {
           <DashboardFilterProvider>
             <ModulesProvider>
               <TemplatesProvider>
-                <BrowserRouter>
-                  <RoutedApp />
-                </BrowserRouter>
+                <EnterpriseSessionProvider>
+                  <SemanticLayerProvider>
+                    <BrowserRouter>
+                      <RoutedApp />
+                    </BrowserRouter>
+                  </SemanticLayerProvider>
+                </EnterpriseSessionProvider>
               </TemplatesProvider>
             </ModulesProvider>
           </DashboardFilterProvider>

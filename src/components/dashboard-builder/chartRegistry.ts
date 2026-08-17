@@ -18,6 +18,7 @@ import {
   Share2,
   SlidersHorizontal,
   SlidersVertical,
+  Sparkles,
   Square,
   Table,
   Target,
@@ -30,7 +31,7 @@ export interface PickerItem {
   type: WorkingBlockType;
   label: string;
   icon: LucideIcon;
-  group: 'tier1' | 'tier2' | 'tier3' | 'utility' | 'report';
+  group: 'tier1' | 'tier2' | 'tier3' | 'utility' | 'report' | 'ai';
 }
 
 export const PICKER_ITEMS: PickerItem[] = [
@@ -64,8 +65,18 @@ export const PICKER_ITEMS: PickerItem[] = [
   { type: 'what-if', label: 'What-If Parameter', icon: SlidersVertical, group: 'utility' },
 ];
 
+/** Enterprise AI visuals — not shown in Custom Dashboard picker. */
+export const ENTERPRISE_AI_PICKER_ITEMS: PickerItem[] = [
+  { type: 'key-influencers', label: 'Key Influencers', icon: Sparkles, group: 'ai' },
+  { type: 'decomposition-tree', label: 'Decomposition Tree', icon: GitBranch, group: 'ai' },
+];
+
 export function pickerByType(type: WorkingBlockType): PickerItem {
-  return PICKER_ITEMS.find((p) => p.type === type) ?? PICKER_ITEMS[0]!;
+  return (
+    PICKER_ITEMS.find((p) => p.type === type) ??
+    ENTERPRISE_AI_PICKER_ITEMS.find((p) => p.type === type) ??
+    PICKER_ITEMS[0]!
+  );
 }
 
 export function needsNoField(type: WorkingBlockType): boolean {
@@ -101,6 +112,10 @@ export function fieldArity(type: WorkingBlockType): { min: number; max: number }
     case 'slicer':
     case 'what-if':
       return { min: 1, max: 1 };
+    case 'key-influencers':
+      return { min: 1, max: 1 };
+    case 'decomposition-tree':
+      return { min: 0, max: 0 };
     default:
       return { min: 1, max: 1 };
   }
@@ -113,6 +128,8 @@ export function autoTitle(type: WorkingBlockType, fieldLabel: string): string {
   if (type === 'section-title') return 'Section';
   if (type === 'div') return 'Spacer';
   if (type === 'reporting-table') return 'Group Table';
+  if (type === 'key-influencers') return 'Key Influencers';
+  if (type === 'decomposition-tree') return 'Decomposition Tree';
   if (!fieldLabel) return pickerByType(type).label;
   if (type === 'sunburst' || type === 'treemap' || type === 'icicle' || type === 'pack' || type === 'radial-tree') {
     return `${pickerByType(type).label}`;

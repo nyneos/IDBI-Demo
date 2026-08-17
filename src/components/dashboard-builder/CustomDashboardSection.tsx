@@ -9,6 +9,7 @@ import { filterDataSource } from '@/data/buildUploadedDataSource';
 import { BuilderDrawer } from './BuilderDrawer';
 import { ConfirmDialog } from './ConfirmDialog';
 import { CustomBlockCard } from './CustomBlockCard';
+import { JustAskDialog, NyneOsMark } from './JustAskDialog';
 import {
   BLOCK_SPAN_CLASS,
   type DashboardBlock,
@@ -46,6 +47,7 @@ export function CustomDashboardSection({
     useCustomDashboard(storageKey, { autosave, initial: initialState });
   const [editing, setEditing] = useState<DashboardBlock | null>(null);
   const [confirmClear, setConfirmClear] = useState(false);
+  const [askOpen, setAskOpen] = useState(false);
   const [filters, setFilters] = useState<Record<string, string>>({});
   const addBlockRef = useRef<HTMLButtonElement>(null);
   const triggerRef = useRef<HTMLButtonElement | null>(null);
@@ -101,13 +103,19 @@ export function CustomDashboardSection({
         <div className="rounded-xl border border-dashed border-hairline">
           <EmptyState
             icon={LayoutDashboard}
-            className="py-8"
+            className="py-8 pb-3"
             message="No custom blocks yet — build your own view of this data."
             action={{
               label: 'Build this page',
               onClick: () => openAtStep1(addDashboardRef),
             }}
           />
+          <div className="flex justify-center pb-8">
+            <Button variant="secondary" onClick={() => setAskOpen(true)}>
+              <NyneOsMark />
+              Ask NyneOS
+            </Button>
+          </div>
         </div>
       ) : (
         <>
@@ -115,6 +123,10 @@ export function CustomDashboardSection({
             title={state.sectionTitle}
             actions={
               <>
+                <Button variant="secondary" onClick={() => setAskOpen(true)}>
+                  <NyneOsMark />
+                  Ask NyneOS
+                </Button>
                 <Button
                   ref={addBlockRef}
                   variant="secondary"
@@ -185,6 +197,15 @@ export function CustomDashboardSection({
           setEditing(null);
         }}
         editingBlock={editing}
+      />
+
+      <JustAskDialog
+        open={askOpen}
+        dataSource={dataSource}
+        onClose={() => setAskOpen(false)}
+        onAdd={(payloads) => {
+          addBlocks(payloads.map((b) => ({ ...b, id: newBlockId() })));
+        }}
       />
 
       <ConfirmDialog

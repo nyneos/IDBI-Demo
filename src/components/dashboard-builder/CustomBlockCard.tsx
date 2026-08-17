@@ -4,6 +4,8 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { ChartFrame } from '@/components/charts/ChartFrame';
 import { cn } from '@/lib/cn';
 import { useDashboardFilterState } from '@/state/useDashboardFilterState';
+import { LineageTraceButton } from '@/features/enterprise/lineage/LineageTraceButton';
+import type { SemanticCatalog } from '@/features/enterprise/semantic-layer/types';
 import { BlockCardMenu } from './BlockCardMenu';
 import { blockKeys, fieldPresent, oneD } from './blockData';
 import { renderBlockChart } from './renderBlockChart';
@@ -24,6 +26,9 @@ interface CustomBlockCardProps {
   filterValue?: string;
   onFilterChange?: (value: string) => void;
   readOnly?: boolean;
+  origin?: DashboardDataSource;
+  dashboardName?: string;
+  catalog?: SemanticCatalog;
 }
 
 export function CustomBlockCard({
@@ -35,6 +40,9 @@ export function CustomBlockCard({
   filterValue,
   onFilterChange,
   readOnly = false,
+  origin,
+  dashboardName = 'Custom Dashboard',
+  catalog,
 }: CustomBlockCardProps) {
   const keys = blockKeys(block);
   const navigate = useNavigate();
@@ -102,7 +110,7 @@ export function CustomBlockCard({
 
   return (
     <div
-      className={cn('relative h-full', drillable && 'cursor-pointer')}
+      className={cn('group relative h-full', drillable && 'cursor-pointer')}
       onClick={(e) => {
         if (!drillable) return;
         if ((e.target as HTMLElement).closest('button, a, input, select, textarea, [role="menu"]')) return;
@@ -113,29 +121,46 @@ export function CustomBlockCard({
         openDrill();
       }}
     >
-      {block.enableDrillThrough ? (
-        <div className="pointer-events-none absolute top-2 right-12 z-10 flex items-center gap-1 rounded-full bg-brand-tint px-1.5 py-0.5 text-xs text-brand-text">
-          <ArrowUpRight size={12} aria-hidden /> Drill-through
-        </div>
-      ) : null}
     <ChartFrame
       className="h-full"
-      title={block.title}
+      title={
+        <span className="flex min-w-0 items-center gap-2">
+          <span className="truncate">{block.title}</span>
+          {block.enableDrillThrough ? (
+            <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-brand-tint px-1.5 py-0.5 text-xs font-medium text-brand-text">
+              <ArrowUpRight size={12} aria-hidden /> Drill-through
+            </span>
+          ) : null}
+        </span>
+      }
       ariaSummary={`${block.title} custom analysis block`}
       titleClassName={cn(
         TITLE_SIZE_CLASS[block.titleSettings.size],
         TITLE_WEIGHT_CLASS[block.titleSettings.weight],
         TITLE_ALIGN_CLASS[block.titleSettings.align],
+        'overflow-visible',
       )}
       headerAction={
-        readOnly ? null : (
-          <BlockCardMenu
-            onEdit={() => onEdit?.(block.id)}
-            onRemove={() => onRemove?.(block.id)}
-            onDrillThrough={onDrillThrough ? () => onDrillThrough(block.id) : undefined}
-            drillThroughEnabled={block.enableDrillThrough}
-          />
-        )
+        <>
+          {catalog && origin ? (
+            <LineageTraceButton
+              block={block}
+              dashboardName={dashboardName}
+              catalog={catalog}
+              origin={origin}
+              viewSource={dataSource}
+              series={data}
+            />
+          ) : null}
+          {readOnly ? null : (
+            <BlockCardMenu
+              onEdit={() => onEdit?.(block.id)}
+              onRemove={() => onRemove?.(block.id)}
+              onDrillThrough={onDrillThrough ? () => onDrillThrough(block.id) : undefined}
+              drillThroughEnabled={block.enableDrillThrough}
+            />
+          )}
+        </>
       }
       empty={empty}
       unavailable={unavailable}

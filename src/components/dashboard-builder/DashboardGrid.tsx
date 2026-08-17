@@ -6,6 +6,7 @@ import { CustomBlockCard } from '@/components/dashboard-builder/CustomBlockCard'
 import { BLOCK_MIN_SIZE, type DashboardBlock, type DashboardDataSource, type GridLayoutItem } from '@/components/dashboard-builder/types';
 import { filterDataSource, withFacts } from '@/data/buildUploadedDataSource';
 import { applyCalculatedField } from '@/data/calculatedFields';
+import type { SemanticCatalog } from '@/features/enterprise/semantic-layer/types';
 import { useDashboardFilterState } from '@/state/useDashboardFilterState';
 
 const ResponsiveGrid = WidthProvider(GridLayout);
@@ -29,6 +30,9 @@ export function DashboardGrid({
   onEdit,
   onRemove,
   onDrillThrough,
+  origin,
+  dashboardName,
+  catalog,
 }: {
   blocks: DashboardBlock[];
   layout: GridLayoutItem[];
@@ -38,6 +42,9 @@ export function DashboardGrid({
   onEdit?: (id: string) => void;
   onRemove?: (id: string) => void;
   onDrillThrough?: (id: string) => void;
+  origin?: DashboardDataSource | null;
+  dashboardName?: string;
+  catalog?: SemanticCatalog;
 }) {
   const { activeFilter, slicers, drillFilter, whatIf } = useDashboardFilterState();
 
@@ -99,6 +106,7 @@ export function DashboardGrid({
       layout={items}
       isDraggable={mode === 'edit'}
       isResizable={mode === 'edit'}
+      draggableCancel=".block-card-menu"
       onLayoutChange={(next) =>
         onLayoutChange?.(
           next.map((n) =>
@@ -122,6 +130,9 @@ export function DashboardGrid({
             <CustomBlockCard
               block={block}
               dataSource={viewSource}
+              origin={origin ?? dataSource ?? viewSource}
+              dashboardName={dashboardName}
+              catalog={catalog}
               readOnly={mode === 'view'}
               onEdit={mode === 'edit' ? onEdit : undefined}
               onRemove={mode === 'edit' ? onRemove : undefined}

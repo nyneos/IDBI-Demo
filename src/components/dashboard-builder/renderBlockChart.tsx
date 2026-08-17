@@ -19,6 +19,11 @@ import { defaultReportingConfig, ReportingTableBlock } from '@/components/table/
 import { ForceGraph } from '@/components/network/ForceGraph';
 import { SunburstChart } from '@/components/sunburst/SunburstChart';
 import { Select } from '@/components/ui/Select';
+import { formatINR } from '@/lib/format';
+import { DecompositionTreeBlock } from '@/features/enterprise/ai-insights/DecompositionTreeView';
+import { KeyInfluencersBlock } from '@/features/enterprise/ai-insights/KeyInfluencersView';
+import { anomalyTooltip, detectAnomalies } from '@/features/enterprise/ai-insights/detectAnomalies';
+import type { SemanticCatalog } from '@/features/enterprise/semantic-layer/types';
 import { colorForLabel } from './dimensionRegistry';
 import {
   blockKeys,
@@ -105,6 +110,9 @@ export function renderBlockChart(
     filterValue?: string;
     onFilterChange?: (value: string) => void;
     onMarkClick?: (field: string, value: string) => void;
+    /** Enterprise: overlay IQR anomalies on line charts bound to date series. */
+    showAnomalies?: boolean;
+    catalog?: SemanticCatalog;
   },
 ) {
   const compact = opts?.compact ?? false;
@@ -173,17 +181,35 @@ export function renderBlockChart(
   }
 
   if (type === 'line') {
+    const lineData = plotData.map((row) => ({ x: row.label, records: row.value }));
+    let anomalies: Map<number, { isAnomaly: boolean }> | undefined;
+    let anomalyTip: ((index: number) => string) | undefined;
+    if (opts?.showAnomalies && plotData.length >= 5) {
+      const detected = detectAnomalies(
+        plotData.map((row) => ({ date: row.label, value: row.value })),
+      );
+      anomalies = new Map();
+      detected.forEach((a, i) => {
+        if (a.isAnomaly) anomalies!.set(i, a);
+      });
+      anomalyTip = (idx) => {
+        const pt = detected[idx];
+        return pt ? anomalyTooltip(pt, formatINR) : '';
+      };
+    }
     return (
       <LineChart
         framed={false}
         slot={slot}
         title=""
         ariaSummary="Line graph of the selected field"
-        data={plotData.map((row) => ({ x: row.label, records: row.value }))}
+        data={lineData}
         series={[{ key: 'records', name: block?.axisLabels?.y || 'Records', color: 'var(--cat-1)' }]}
         xKey="x"
         height={compact ? 140 : 180}
         fill
+        anomalies={anomalies}
+        anomalyTooltip={anomalyTip}
       />
     );
   }
@@ -382,6 +408,29 @@ export function renderBlockChart(
       keys.length >= 3 ? keys : source.dimensions.slice(0, 3).map((d) => d.key),
     );
     return <HivePlot axes={hive.axes} edges={hive.edges} />;
+  }
+
+  if (type === 'key-influencers' && source && block) {
+    const targetField = block.dimensionKey || 'Status';
+    const targetValue = block.aiConfig?.targetValue ?? 'Failed';
+    return (
+      <KeyInfluencersBlock source={source} targetField={targetField} targetValue={targetValue} />
+    );
+  }
+
+  if (type === 'decomposition-tree' && source && block && opts?.catalog) {
+    const measureId = opts.catalog.bindings[block.id]?.measureId;
+    const measure = measureId
+      ? opts.catalog.measures.find((m) => m.id === measureId)
+      : opts.catalog.measures.find((m) => m.status === 'approved');
+    if (!measure) {
+      return (
+        <p className="p-4 text-sm text-content-secondary">
+          Bind an approved governed measure to use the decomposition tree.
+        </p>
+      );
+    }
+    return <DecompositionTreeBlock source={source} measure={measure} />;
   }
 
   if (type !== 'gauge') return null;

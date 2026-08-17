@@ -35,7 +35,7 @@ export function AnalyzeOverlay({ progress }: { progress: number }) {
 
   return (
     <div
-      className="flex min-h-[70vh] w-full max-w-xl flex-col items-center justify-center px-4 py-12"
+      className="flex min-h-[calc(100vh-9rem)] w-full flex-col items-center justify-center rounded-2xl bg-paper px-6 py-16"
       role="status"
       aria-live="polite"
       aria-busy
@@ -44,8 +44,8 @@ export function AnalyzeOverlay({ progress }: { progress: number }) {
         <Icon size={32} strokeWidth={1.5} className="animate-analyze-stage" aria-hidden />
       </span>
       <h2 className="mt-6 text-center text-2xl font-semibold text-content-primary">{line.title}</h2>
-      <p className="mt-2 text-center text-sm text-content-secondary">{line.sub}</p>
-      <div className="mt-8 h-2 w-full overflow-hidden rounded-full bg-sunken">
+      <p className="mt-2 max-w-md text-center text-sm text-content-secondary">{line.sub}</p>
+      <div className="mt-8 h-2 w-full max-w-xl overflow-hidden rounded-full bg-sunken">
         <div
           className="h-full rounded-full bg-brand transition-[width] duration-500 ease-out"
           style={{ width: `${pct}%` }}

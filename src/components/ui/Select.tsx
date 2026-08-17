@@ -38,7 +38,7 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(function Select
           disabled={disabled}
           aria-label={hideLabel ? label : undefined}
           className={cn(
-            'h-10 w-full min-w-0 max-w-full appearance-none rounded-lg border border-strong bg-white px-3 pr-9',
+            'h-10 w-full min-w-0 max-w-full appearance-none rounded-md border border-strong bg-white px-3 pr-9',
             'text-sm font-normal text-content-primary',
             'hover:border-content-tertiary',
             'focus:border-brand outline-none',

@@ -29,7 +29,9 @@ export type WorkingBlockType =
   | 'parallel-sets'
   | 'combo'
   | 'slicer'
-  | 'what-if';
+  | 'what-if'
+  | 'key-influencers'
+  | 'decomposition-tree';
 
 export type TitleSize = 'small' | 'medium' | 'large';
 export type TitleWeight = 'regular' | 'medium' | 'semibold' | 'bold';
@@ -98,6 +100,8 @@ export interface DashboardBlock {
     aggregatableColumns: string[];
     expandableFields: string[];
   };
+  /** Enterprise AI blocks — target value for key influencers (field in dimensionKey). */
+  aiConfig?: { targetValue?: string };
   layout?: GridLayoutItem;
 }
 
@@ -260,6 +264,8 @@ export const BLOCK_SPAN_CLASS: Record<WorkingBlockType, string> = {
   chord: 'col-span-12',
   hive: 'col-span-12',
   'parallel-sets': 'col-span-12',
+  'key-influencers': 'col-span-12 md:col-span-6',
+  'decomposition-tree': 'col-span-12',
 };
 
 export const BLOCK_MIN_SIZE: Record<WorkingBlockType, { minW: number; minH: number; w: number; h: number }> = {
@@ -291,6 +297,8 @@ export const BLOCK_MIN_SIZE: Record<WorkingBlockType, { minW: number; minH: numb
   hive: { minW: 6, minH: 8, w: 12, h: 10 },
   'parallel-sets': { minW: 6, minH: 8, w: 12, h: 10 },
   combo: { minW: 5, minH: 8, w: 8, h: 9 },
+  'key-influencers': { minW: 4, minH: 8, w: 6, h: 10 },
+  'decomposition-tree': { minW: 6, minH: 10, w: 12, h: 12 },
 };
 
 export const ALL_BLOCK_TYPES: WorkingBlockType[] = [
@@ -322,4 +330,6 @@ export const ALL_BLOCK_TYPES: WorkingBlockType[] = [
   'combo',
   'slicer',
   'what-if',
+  'key-influencers',
+  'decomposition-tree',
 ];

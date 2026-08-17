@@ -38,6 +38,9 @@ export interface LineChartProps {
   plotClassName?: string;
   framed?: boolean;
   slot?: ChartFrameRenderProps;
+  /** Enterprise anomaly overlay — index → anomaly metadata */
+  anomalies?: Map<number, { isAnomaly: boolean }>;
+  anomalyTooltip?: (index: number) => string;
 }
 
 function pathFrom(points: Array<{ x: number; y: number; gapAfter?: boolean }>): string {
@@ -75,6 +78,8 @@ export function LineChart({
   titleClassName,
   plotClassName,
   framed = true,
+  anomalies,
+  anomalyTooltip,
 }: LineChartProps) {
   const reduced = useReducedMotion();
   const [hidden, setHidden] = useState<Record<string, boolean>>({});
@@ -253,19 +258,22 @@ export function LineChart({
                       strokeLinejoin="round"
                       strokeLinecap="round"
                     />
-                    {pts.map((p, i) => (
+                    {pts.map((p, i) => {
+                      const anom = anomalies?.get(i)?.isAnomaly;
+                      const dotColor = anom ? 'var(--status-error)' : color;
+                      return (
                       <circle
                         key={`${s.key}-${i}`}
                         cx={p.x}
                         cy={p.y}
-                        r={cursor === i ? 3.5 : 2}
-                        fill={color}
-                        opacity={reduced || cursor !== null ? 1 : 0}
+                        r={anom || cursor === i ? 3.5 : 2}
+                        fill={dotColor}
+                        opacity={reduced || cursor !== null || anom ? 1 : 0}
                         style={{
                           transition: `opacity ${MOTION.fast}ms`,
                         }}
                       />
-                    ))}
+                    );})}
                   </g>
                 );
               })}
@@ -290,11 +298,15 @@ export function LineChart({
             <div className="pointer-events-none absolute left-1/2 top-12 z-10 -translate-x-1/2">
               <ChartTooltip
                 title={String(data[cursor]![xKey])}
-                rows={visible.map((s, si) => ({
-                  label: s.name,
-                  value: formatCount(Number(data[cursor]![s.key] ?? 0)),
-                  color: s.color ?? CATEGORY_COLORS[s.name] ?? `var(--cat-${(si % 6) + 1})`,
-                }))}
+                rows={
+                  anomalies?.get(cursor)?.isAnomaly && anomalyTooltip?.(cursor)
+                    ? [{ label: 'Anomaly', value: anomalyTooltip(cursor) }]
+                    : visible.map((s, si) => ({
+                        label: s.name,
+                        value: formatCount(Number(data[cursor]![s.key] ?? 0)),
+                        color: s.color ?? CATEGORY_COLORS[s.name] ?? `var(--cat-${(si % 6) + 1})`,
+                      }))
+                }
               />
             </div>
           ) : null}
