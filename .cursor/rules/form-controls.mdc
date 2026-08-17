@@ -1,0 +1,14 @@
+---
+description: Text inputs use a white background, outline-none, and no Tailwind ring.
+globs: **/*.{tsx,ts,css}
+alwaysApply: true
+---
+
+# Form controls
+
+- Text `input` and `textarea`: `bg-white` (or `#ffffff`), always `outline-none`.
+- Never use `ring`, `ring-*`, `ring-offset-*`, or `focus:ring` on inputs, textareas, or selects.
+- Focus state is `outline-none` plus `focus:border-brand` (or another border color), never a ring or extra box-shadow.
+- Do not use `bg-sunken` on text fields.
+- Range, checkbox, radio, and file inputs are exempt from the white background rule.
+---
