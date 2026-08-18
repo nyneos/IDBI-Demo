@@ -52,6 +52,7 @@ function RoutedApp() {
         <Route path="/view" element={<DashboardView />} />
         <Route path="/view/:dashboardId" element={<DashboardView />} />
         <Route path="/enterprise/*" element={<EnterpriseRoutes />} />
+        <Route path="*" element={<Navigate to={ROUTES.intelligence} replace />} />
       </Route>
     </Routes>
   );

@@ -272,6 +272,20 @@ body {
   animation: analyze-stage-pulse 1.5s ease-in-out infinite;
 }
 
+@keyframes prompt-caret {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0;
+  }
+}
+
+.animate-prompt-caret {
+  animation: prompt-caret 1s step-end infinite;
+}
+
 /* Resize handles only belong on grid items — hide orphans on empty canvas */
 .react-resizable-handle {
   display: none;
