@@ -4,6 +4,7 @@ import { IconButton } from '@/components/ui/IconButton';
 import { StatusPill } from '@/components/ui/StatusPill';
 import { Button } from '@/components/ui/Button';
 import { PRODUCT_SUFFIX, PRODUCT_WORDMARK } from '@/lib/product';
+import { ROUTES } from '@/lib/routes';
 import { ROLE_LABEL } from '../auth/types';
 import { useEnterpriseSession } from '../auth/useEnterpriseSession';
 
@@ -47,7 +48,7 @@ export function EnterpriseTopBar({
           className="hidden sm:inline-flex"
           onClick={() => {
             logout();
-            navigate('/enterprise/login');
+            navigate(ROUTES.login);
           }}
         >
           Logout

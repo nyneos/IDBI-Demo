@@ -2,6 +2,7 @@ import { useState, type FormEvent } from 'react';
 import { ArrowLeft, ArrowRight } from 'lucide-react';
 import { Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/Button';
+import { ROUTES } from '@/lib/routes';
 import { ENTERPRISE_FIELD } from '../shared/EnterpriseSection';
 import { LoginBrandHeader, LoginHeroPanel } from './LoginHeroPanel';
 import { LOGIN_PATHS, type LoginPath } from './loginPaths';
@@ -13,7 +14,11 @@ export function LoginScreen() {
   const { login, user } = useEnterpriseSession();
   const navigate = useNavigate();
   const location = useLocation();
-  const from = (location.state as { from?: string } | null)?.from ?? '/enterprise/dashboard-builder';
+  const requested = (location.state as { from?: string } | null)?.from;
+  const from =
+    requested && requested !== ROUTES.login && requested !== '/enterprise/login'
+      ? requested
+      : ROUTES.intelligence;
 
   const [step, setStep] = useState<Step>('choose');
   const [path, setPath] = useState<LoginPath | null>(null);
