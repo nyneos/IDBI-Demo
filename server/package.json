@@ -4,6 +4,7 @@
   "type": "module",
   "scripts": {
     "dev": "tsx watch cmd/server/main.ts",
+    "build": "echo 'API uses tsx — no compile step'",
     "start": "tsx cmd/server/main.ts",
     "db:migrate": "tsx database/migrate.ts"
   },
