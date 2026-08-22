@@ -3,3 +3,6 @@ dist
 .DS_Store
 *.local
 .tsbuildinfo
+.env
+server/.env
+server/logs/*.log

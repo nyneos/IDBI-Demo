@@ -1,11 +1,7 @@
 import { LogOut, Menu, User, X } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { Button } from '@/components/ui/Button';
-import { IconButton } from '@/components/ui/IconButton';
-import { useEnterpriseSession } from '@/features/enterprise/auth/useEnterpriseSession';
-import { PRODUCT_SUFFIX, PRODUCT_WORDMARK } from '@/lib/product';
-import { ROUTES } from '@/lib/routes';
-import { ModuleSwitcher } from './ModuleSwitcher';
+import { Button, IconButton } from '@/layout/ui';
+import { useSession } from '@/session';
 
 export function TopBar({
   collapsed,
@@ -16,7 +12,7 @@ export function TopBar({
   onToggleSidebar: () => void;
   onOpenPreferences: () => void;
 }) {
-  const { logout } = useEnterpriseSession();
+  const { logout } = useSession();
   const navigate = useNavigate();
 
   return (
@@ -33,12 +29,11 @@ export function TopBar({
           )}
         </IconButton>
         <p className="truncate text-xl font-bold">
-          <span className="text-brand-text">{PRODUCT_WORDMARK}</span>
-          <span className="ml-1 font-semibold text-content-secondary">{PRODUCT_SUFFIX}</span>
+          <span className="text-brand-text">Dashboard</span>
+          {/* <span className="ml-1 font-semibold text-content-secondary">Dashboard</span> */}
         </p>
       </div>
       <div className="flex min-w-0 items-center gap-2">
-        <ModuleSwitcher />
         <IconButton
           aria-label="Open preferences"
           className="shrink-0 rounded-full"
@@ -51,7 +46,7 @@ export function TopBar({
           leftIcon={LogOut}
           onClick={() => {
             logout();
-            navigate(ROUTES.login);
+            navigate('/login');
           }}
         >
           Logout
@@ -60,4 +55,3 @@ export function TopBar({
     </header>
   );
 }
-

@@ -1,6 +1,7 @@
-import { createContext, useCallback, useContext, useMemo, useRef, useState, type ReactNode } from 'react';
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import {
   DEFAULT_PREFERENCES,
+  FONT_STACKS,
   type BrandId,
   type FontId,
   type SurfaceId,
@@ -94,6 +95,20 @@ export function PreferencesProvider({ children }: { children: ReactNode }) {
   );
 
   return <PreferencesContext.Provider value={value}>{children}</PreferencesContext.Provider>;
+}
+
+export function ThemeProvider({ children }: { children: ReactNode }) {
+  const { brand, mode, surface, font } = usePreferences();
+
+  useEffect(() => {
+    const root = document.documentElement;
+    root.dataset.brand = brand;
+    root.dataset.mode = mode;
+    root.dataset.surface = surface;
+    root.style.setProperty('--font-family', FONT_STACKS[font]);
+  }, [brand, mode, surface, font]);
+
+  return <>{children}</>;
 }
 
 export function usePreferences(): PreferencesContextValue {

@@ -1,9 +1,7 @@
 import { AnimatePresence, motion } from 'framer-motion';
 import { Check, X } from 'lucide-react';
 import { createPortal } from 'react-dom';
-import { Button } from '@/components/ui/Button';
-import { IconButton } from '@/components/ui/IconButton';
-import { Select } from '@/components/ui/Select';
+import { Button, IconButton, Select } from '@/layout/ui';
 import { cn } from '@/lib/cn';
 import {
   BRANDS,
