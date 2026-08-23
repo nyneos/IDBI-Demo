@@ -20,9 +20,13 @@ export interface ApiResponse<T = unknown> {
 
 export const api = axios.create({
   baseURL: API_BASE_URL,
-  headers: { 'Content-Type': 'application/json' },
-  timeout: 15_000,
+  headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+  timeout: 60_000,
 });
+
+function isHtmlResponse(data: unknown): boolean {
+  return typeof data === 'string' && /^\s*<!doctype html|^\s*<html/i.test(data);
+}
 
 export function getApiErrorMessage(error: unknown): string {
   const target = import.meta.env.DEV
@@ -31,19 +35,29 @@ export function getApiErrorMessage(error: unknown): string {
 
   if (isAxiosError(error)) {
     if (error.response) {
-      const body = error.response.data as ApiResponse | string;
+      const body = error.response.data;
+      if (isHtmlResponse(body)) {
+        return 'Got HTML instead of API data. Redeploy the frontend so it points to the Render API.';
+      }
+      const parsed = body as ApiResponse | string;
       const detail =
-        typeof body === 'string'
-          ? body
-          : (body.error ?? JSON.stringify(body));
-      const code = typeof body === 'object' && body?.statusCode ? body.statusCode : error.response.status;
+        typeof parsed === 'string'
+          ? parsed
+          : (parsed.error ?? JSON.stringify(parsed));
+      const code = typeof parsed === 'object' && parsed?.statusCode ? parsed.statusCode : error.response.status;
       return `${error.config?.method?.toUpperCase() ?? 'GET'} ${error.config?.url ?? '/api/user-name'} failed (${code}): ${detail}`;
     }
     if (error.code === 'ECONNABORTED') {
-      return `Request timed out — API not responding at ${target}`;
+      if (import.meta.env.DEV) {
+        return `Request timed out — API not responding at ${target}. Start the server: cd server && npm run dev`;
+      }
+      return 'Request timed out — the API may still be waking up. Free hosting can take up to ~50 seconds. Wait and try again.';
     }
     if (error.request) {
-      return `Network error — cannot reach API at ${target}. Start the server: cd server && npm run dev`;
+      if (import.meta.env.DEV) {
+        return `Network error — cannot reach API at ${target}. Start the server: cd server && npm run dev`;
+      }
+      return `Cannot reach the API (${configuredBase}). Free hosting sleeps when idle and can take up to ~50 seconds to start — wait and click Continue again.`;
     }
     return error.message;
   }
@@ -54,8 +68,11 @@ export function getApiErrorMessage(error: unknown): string {
 
 export async function fetchUserName(): Promise<string> {
   const { data: body } = await api.get<ApiResponse<{ userName: string }>>('/api/user-name');
-  if (!body.success || !body.data?.userName) {
-    throw new Error(body.error ?? 'Failed to load user name');
+  if (isHtmlResponse(body)) {
+    throw new Error('Got HTML instead of API data. Redeploy the frontend so it points to the Render API.');
+  }
+  if (!body || typeof body !== 'object' || !body.success || !body.data?.userName) {
+    throw new Error(body?.error ?? 'Failed to load user name');
   }
   return body.data.userName;
 }
