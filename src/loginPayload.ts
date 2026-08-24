@@ -9,14 +9,10 @@ export interface LoginJsResult {
 
 /** Default JS — runs as an async function body (await / fetch / console all work). */
 export const DEFAULT_LOGIN_JS = `const name = "Kanav";
-function greet(who) {
-  // try typing "con" then Ctrl/Cmd+Space for autocomplete
-  console.log(who);
-  return who;
-}
+console.log(name);
 
 return {
-  name: greet(name)
+  name
 };
 `;
 
