@@ -1,13 +1,16 @@
 import { UserRepository } from '../repositories/user.repository.js';
-import type { UserNameResponse } from '../models/user.model.js';
+import type { LoginPayload } from '../models/user.model.js';
 import { config } from '../config/config.js';
 
 export class UserService {
   constructor(private readonly repo = new UserRepository()) {}
 
-  async getUserName(): Promise<UserNameResponse> {
-    const userName = await this.repo.getUserName();
-    return { userName };
+  async getPayload(): Promise<LoginPayload> {
+    return this.repo.getPayload();
+  }
+
+  async savePayload(payload: LoginPayload): Promise<LoginPayload> {
+    return this.repo.savePayload(payload);
   }
 
   getSseIntervalMs(): number {

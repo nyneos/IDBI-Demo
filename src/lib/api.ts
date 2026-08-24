@@ -1,4 +1,5 @@
 import axios, { isAxiosError } from 'axios';
+import type { LoginPayload } from '@/loginPayload';
 
 function normalizeBaseUrl(url: string): string {
   const trimmed = url.trim().replace(/\/$/, '');
@@ -66,15 +67,25 @@ export function getApiErrorMessage(error: unknown): string {
   return 'Unknown error while calling the API';
 }
 
-export async function fetchUserName(): Promise<string> {
-  const { data: body } = await api.get<ApiResponse<{ userName: string }>>('/api/user-name');
+function parsePayload(body: unknown): LoginPayload {
   if (isHtmlResponse(body)) {
     throw new Error('Got HTML instead of API data. Redeploy the frontend so it points to the Render API.');
   }
-  if (!body || typeof body !== 'object' || !body.success || !body.data?.userName) {
-    throw new Error(body?.error ?? 'Failed to load user name');
+  const parsed = body as ApiResponse<LoginPayload>;
+  if (!parsed || typeof parsed !== 'object' || !parsed.success || !parsed.data?.userName) {
+    throw new Error(parsed?.error ?? 'Failed to load dashboard data');
   }
-  return body.data.userName;
+  return parsed.data;
+}
+
+export async function sendLoginPayload(payload: LoginPayload): Promise<LoginPayload> {
+  const { data: body } = await api.post<ApiResponse<LoginPayload>>('/api/user-name', payload);
+  return parsePayload(body);
+}
+
+export async function fetchLoginPayload(): Promise<LoginPayload> {
+  const { data: body } = await api.get<ApiResponse<LoginPayload>>('/api/user-name');
+  return parsePayload(body);
 }
 
 export function userNameStreamUrl(): string {

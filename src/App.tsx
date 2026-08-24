@@ -3,7 +3,8 @@ import { AppShell } from '@/layout/AppShell';
 import { LoginScreen } from '@/LoginScreen';
 import { PreferencesProvider, ThemeProvider } from '@/theme/usePreferences';
 import { SessionProvider, useSession } from '@/session';
-import { useUserNameStream } from '@/useUserNameStream';
+import { useDashboardPayload } from '@/useDashboardPayload';
+import type { LoginPayload } from '@/loginPayload';
 
 function RequireAuth() {
   const { user } = useSession();
@@ -16,11 +17,17 @@ function RequireAuth() {
 
 function DashboardHome() {
   const { user } = useSession();
-  const userName = useUserNameStream(user?.name ?? '');
+  const initial: LoginPayload = {
+    userName: user?.name ?? '',
+    message: '',
+    sentAt: '',
+  };
+  const payload = useDashboardPayload(initial);
 
   return (
-    <div className="flex min-h-[40vh] items-center justify-center">
-      <h1 className="text-2xl font-semibold text-content-primary">Hi, {userName}</h1>
+    <div className="flex min-h-[40vh] flex-col items-center justify-center gap-2 px-6 text-center">
+      <h1 className="text-2xl font-semibold text-content-primary">Hi, {payload.userName}</h1>
+      {payload.message ? <p className="text-sm text-content-secondary">{payload.message}</p> : null}
     </div>
   );
 }

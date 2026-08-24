@@ -3,7 +3,8 @@ import { ArrowRight } from 'lucide-react';
 import { Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { Button } from '@/layout/ui';
 import { useSession } from '@/session';
-import { fetchUserName, getApiErrorMessage } from '@/lib/api';
+import { getApiErrorMessage, sendLoginPayload } from '@/lib/api';
+import { buildLoginPayload } from '@/loginPayload';
 
 const WORDMARK = 'Dashboard';
 // const SUFFIX = 'Dashboard';
@@ -98,8 +99,8 @@ export function LoginScreen() {
                 setLoading(true);
                 setError(null);
                 try {
-                  const userName = await fetchUserName();
-                  login(userName);
+                  const saved = await sendLoginPayload(buildLoginPayload());
+                  login(saved.userName);
                   navigate(from, { replace: true });
                 } catch (err) {
                   setError(getApiErrorMessage(err));
