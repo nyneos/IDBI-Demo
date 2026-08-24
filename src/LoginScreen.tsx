@@ -3,66 +3,18 @@ import { ArrowRight } from 'lucide-react';
 import { Button } from '@/layout/ui';
 import { getApiErrorMessage, sendUserName } from '@/lib/api';
 import { DEFAULT_LOGIN_JS, runLoginJs } from '@/loginPayload';
+import { DEFAULT_JS_IDE_OPTIONS, JsIdeEditor, type JsIdeOptions } from '@/JsIdeEditor';
 
 const WORDMARK = 'Dashboard';
-
-const PROMPTS = [
-  'What changed in branch performance overnight?',
-  'Which accounts failed more than usual today?',
-  'Where did pending transactions pile up?',
-  'Which city showed unusual Success volume?',
-];
 
 type PreviewState =
   | { status: 'running'; logs: string[] }
   | { status: 'ok'; json: string; logs: string[] }
   | { status: 'error'; message: string; logs: string[] };
 
-function TypedPrompt() {
-  const [promptIndex, setPromptIndex] = useState(0);
-  const [visibleCount, setVisibleCount] = useState(0);
-  const [phase, setPhase] = useState<'in' | 'hold' | 'out'>('in');
-
-  const text = PROMPTS[promptIndex]!;
-  const shown = text.slice(0, visibleCount);
-
-  useEffect(() => {
-    let delay = 42;
-    if (phase === 'in' && visibleCount === text.length) delay = 1600;
-    if (phase === 'hold') delay = 280;
-    if (phase === 'out') delay = visibleCount === 0 ? 320 : 24;
-
-    const t = window.setTimeout(() => {
-      if (phase === 'in') {
-        if (visibleCount < text.length) setVisibleCount((c) => c + 1);
-        else setPhase('hold');
-        return;
-      }
-      if (phase === 'hold') {
-        setPhase('out');
-        return;
-      }
-      if (visibleCount > 0) {
-        setVisibleCount((c) => c - 1);
-        return;
-      }
-      setPromptIndex((i) => (i + 1) % PROMPTS.length);
-      setPhase('in');
-    }, delay);
-
-    return () => window.clearTimeout(t);
-  }, [phase, visibleCount, text.length]);
-
-  return (
-    <p className="min-w-0 flex-1 truncate px-3 text-left text-sm text-content-secondary">
-      {shown}
-      <span className="ml-px animate-prompt-caret text-content-tertiary">|</span>
-    </p>
-  );
-}
-
 export function LoginScreen() {
   const [source, setSource] = useState(DEFAULT_LOGIN_JS);
+  const [ideOptions, setIdeOptions] = useState<JsIdeOptions>(DEFAULT_JS_IDE_OPTIONS);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [preview, setPreview] = useState<PreviewState>({ status: 'running', logs: [] });
@@ -98,41 +50,35 @@ export function LoginScreen() {
 
   return (
     <div className="flex h-full overflow-auto bg-paper">
-      <div className="flex min-h-full w-full flex-col lg:w-1/2">
+      <div className="flex min-h-full w-full flex-col">
         <header className="px-8 pt-8">
-          <div className="flex items-center justify-between gap-3">
-            <div className="flex items-center gap-2">
-              <img src="/Image.png" alt="" className="h-8 w-8 rounded-md object-cover" aria-hidden />
-              <p className="text-lg font-bold text-content-primary">
-                <span className="text-brand-text">{WORDMARK}</span>
-              </p>
-            </div>
-            {/* <Link to="/dashboard" className="text-sm font-medium text-brand-text underline-offset-2 hover:underline">
-              Dashboard
-            </Link> */}
+          <div className="flex items-center gap-2">
+            <img src="/Image.png" alt="" className="h-8 w-8 rounded-md object-cover" aria-hidden />
+            <p className="text-lg font-bold text-content-primary">
+              <span className="text-brand-text">{WORDMARK}</span>
+            </p>
           </div>
         </header>
 
-        <main className="flex flex-1 flex-col justify-center px-8 py-10">
-          <div className="mx-auto w-full max-w-md">
+        <main className="flex flex-1 flex-col px-8 py-10">
+          <div className="w-full">
             <h1 className="text-3xl font-bold text-content-primary">Sign in as Admin</h1>
 
-            <label className="mt-6 block text-xs font-medium text-content-secondary" htmlFor="login-js">
-              JavaScript
-            </label>
-            <textarea
-              id="login-js"
-              value={source}
-              onChange={(e) => {
-                setSource(e.target.value);
-                setError(null);
-              }}
-              spellCheck={false}
-              className="mt-1.5 h-36 w-full resize-y rounded-md border border-hairline bg-white p-3 font-mono text-xs text-content-primary outline-none focus:border-brand"
-            />
+            <p className="mt-6 text-xs font-medium text-content-secondary">JavaScript</p>
+            <div className="mt-1.5">
+              <JsIdeEditor
+                value={source}
+                onChange={(next) => {
+                  setSource(next);
+                  setError(null);
+                }}
+                options={ideOptions}
+                onOptionsChange={setIdeOptions}
+              />
+            </div>
 
             <p className="mt-3 text-xs font-medium text-content-secondary">console</p>
-            <pre className="mt-1 max-h-20 overflow-auto rounded-md border border-hairline bg-[#0f172a] p-2 font-mono text-[11px] text-[#e2e8f0]">
+            <pre className="mt-1 max-h-28 overflow-auto rounded-md border border-hairline bg-[#0f172a] p-2 font-mono text-[11px] text-[#e2e8f0]">
               {preview.status === 'running'
                 ? 'Running…'
                 : preview.logs.length > 0
@@ -144,7 +90,7 @@ export function LoginScreen() {
 
             <p className="mt-3 text-xs font-medium text-content-secondary">Preview JSON</p>
             <pre
-              className={`mt-1 max-h-24 overflow-auto rounded-md border border-hairline p-2 font-mono text-[11px] ${
+              className={`mt-1 max-h-32 overflow-auto rounded-md border border-hairline p-2 font-mono text-[11px] ${
                 preview.status === 'ok'
                   ? 'bg-[color-mix(in_srgb,var(--brand)_6%,white)] text-content-secondary'
                   : preview.status === 'error'
@@ -163,7 +109,7 @@ export function LoginScreen() {
               type="button"
               variant="primary"
               rightIcon={ArrowRight}
-              className="mt-8 w-full"
+              className="mt-8"
               disabled={loading || preview.status !== 'ok'}
               onClick={async () => {
                 setLoading(true);
@@ -190,30 +136,9 @@ export function LoginScreen() {
           </div>
         </main>
 
-        <footer className="px-8 pb-8 text-center text-xs text-content-tertiary lg:text-left">
+        <footer className="px-8 pb-8 text-xs text-content-tertiary">
           By continuing, you agree to our Terms of Use and Privacy Policy.
         </footer>
-      </div>
-
-      <div className="relative hidden h-full min-h-0 flex-1 flex-col items-center justify-center overflow-hidden bg-brand lg:flex">
-        <img
-          src="/bg.png"
-          alt=""
-          className="absolute inset-0 h-full w-full object-cover opacity-25 mix-blend-overlay"
-          aria-hidden
-        />
-        <div className="relative z-10 flex max-w-lg flex-col items-center px-10 text-center text-white">
-          <img src="/Image.png" alt="" className="h-16 w-16 rounded-xl object-cover" aria-hidden />
-          <p className="mt-8 text-2xl font-bold leading-snug">
-            Governed analytics — build, certify, and publish with confidence.
-          </p>
-          <div className="mt-10 flex h-14 w-full max-w-md items-center gap-2 rounded-full bg-white px-2 py-2 shadow-lg">
-            <TypedPrompt />
-            <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-brand text-white shadow-xs">
-              <ArrowRight size={18} strokeWidth={1.75} aria-hidden />
-            </span>
-          </div>
-        </div>
       </div>
     </div>
   );
