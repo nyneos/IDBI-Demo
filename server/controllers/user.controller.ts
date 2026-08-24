@@ -1,6 +1,12 @@
 import type { Request, Response } from 'express';
 import { UserService } from '../services/user.service.js';
-import { sendError, sendSuccess, buildSuccess, buildError, writeSse } from '../utils/response.js';
+import {
+  addUserNameSseClient,
+  broadcastUserName,
+  removeUserNameSseClient,
+  sendUserNameToClient,
+} from '../services/user-name-sse.hub.js';
+import { sendError, sendSuccess, buildError, writeSse } from '../utils/response.js';
 import { logError } from '../utils/logger.js';
 
 const userService = new UserService();
@@ -32,6 +38,8 @@ export class UserController {
         return;
       }
       const saved = await userService.saveUserName(userName);
+      // Push to all open Dashboard SSE clients immediately (no wait for poll)
+      broadcastUserName(saved.userName);
       sendSuccess(res, saved);
     } catch (err) {
       logError('saveUserName failed', err);
@@ -45,30 +53,28 @@ export class UserController {
     res.setHeader('Connection', 'keep-alive');
     res.flushHeaders?.();
 
-    let lastSent: string | null = null;
+    const client = addUserNameSseClient(res);
     let closed = false;
 
-    const push = async () => {
+    const pushFromDb = async () => {
       if (closed) return;
       try {
         const { userName } = await userService.getUserName();
-        // Only emit a data event when the DB value actually changes
-        if (userName !== lastSent) {
-          lastSent = userName;
-          writeSse(res, buildSuccess({ userName }, 200));
-        }
+        sendUserNameToClient(client, userName);
       } catch (err) {
         logError('SSE push failed', err);
         writeSse(res, buildError('Failed to read user_name from app_settings', 500));
       }
     };
 
-    await push();
-    const timer = setInterval(push, userService.getSseIntervalMs());
+    await pushFromDb();
+    // Backup poll for external DB edits; Login → Dashboard updates use broadcast (instant)
+    const timer = setInterval(pushFromDb, userService.getSseIntervalMs());
 
     req.on('close', () => {
       closed = true;
       clearInterval(timer);
+      removeUserNameSseClient(client);
     });
   }
 }

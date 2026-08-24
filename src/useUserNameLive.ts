@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { fetchUserName, parseSsePayload, userNameStreamUrl } from '@/lib/api';
 
-const POLL_MS = 5_000;
+const POLL_MS = 1_000;
 
 export function useUserNameLive(initialName = '') {
   const [userName, setUserName] = useState(initialName);
@@ -51,7 +51,7 @@ export function useUserNameLive(initialName = '') {
         source = null;
         if (!cancelled) {
           void poll();
-          reconnectTimer = setTimeout(connect, 3_000);
+          reconnectTimer = setTimeout(connect, 1_000);
         }
       };
     };

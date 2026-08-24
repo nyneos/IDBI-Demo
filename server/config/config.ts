@@ -14,7 +14,7 @@ export const config = {
   isDev: develMode || nodeEnv !== 'production',
   logLevel: process.env.LOG_LEVEL ?? (nodeEnv === 'production' ? 'info' : 'debug'),
   userNameKey: 'user_name',
-  sseIntervalMs: Number(process.env.SSE_INTERVAL_MS ?? 5_000),
+  sseIntervalMs: Number(process.env.SSE_INTERVAL_MS ?? 1_000),
   db: {
     connectionString: process.env.DATABASE_URL ?? '',
     host: process.env.DB_HOST ?? process.env.DB_POOLER_HOST ?? 'localhost',
