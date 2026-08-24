@@ -1,24 +1,12 @@
 import { useEffect, useRef, useState } from 'react';
-import type { LoginPayload } from '@/loginPayload';
-import { fetchLoginPayload, parseSsePayload, userNameStreamUrl } from '@/lib/api';
+import { fetchUserName, parseSsePayload, userNameStreamUrl } from '@/lib/api';
 
 const POLL_MS = 5_000;
 
-function samePayload(a: LoginPayload | null, b: LoginPayload | null): boolean {
-  if (a === b) return true;
-  if (!a || !b) return false;
-  return a.userName === b.userName && a.message === b.message && a.sentAt === b.sentAt;
-}
-
-export function useDashboardPayload(initial: LoginPayload) {
-  const [payload, setPayload] = useState(initial);
-  const currentRef = useRef(initial);
+export function useUserNameLive(initialName = '') {
+  const [userName, setUserName] = useState(initialName);
+  const currentRef = useRef(initialName);
   const sseOkRef = useRef(false);
-
-  useEffect(() => {
-    currentRef.current = initial;
-    setPayload((prev) => (samePayload(prev, initial) ? prev : initial));
-  }, [initial]);
 
   useEffect(() => {
     let source: EventSource | null = null;
@@ -26,18 +14,19 @@ export function useDashboardPayload(initial: LoginPayload) {
     let pollTimer: ReturnType<typeof setInterval> | null = null;
     let cancelled = false;
 
-    const apply = (next: LoginPayload | null | undefined) => {
-      if (!next?.userName || samePayload(next, currentRef.current)) return;
+    const apply = (next: string | null | undefined) => {
+      if (!next || next === currentRef.current) return;
       currentRef.current = next;
-      setPayload(next);
+      setUserName(next);
     };
 
     const poll = async () => {
       if (cancelled || sseOkRef.current) return;
       try {
-        apply(await fetchLoginPayload());
+        const data = await fetchUserName();
+        apply(data.userName);
       } catch {
-        /* keep last known payload */
+        /* keep last known value */
       }
     };
 
@@ -51,9 +40,9 @@ export function useDashboardPayload(initial: LoginPayload) {
 
       source.onmessage = (event) => {
         sseOkRef.current = true;
-        const parsed = parseSsePayload<LoginPayload>(event.data);
-        if (!parsed || !parsed.success || parsed.error) return;
-        apply(parsed.data);
+        const parsed = parseSsePayload<{ userName: string }>(event.data);
+        if (!parsed || !parsed.success || parsed.error || !parsed.data) return;
+        apply(parsed.data.userName);
       };
 
       source.onerror = () => {
@@ -68,6 +57,7 @@ export function useDashboardPayload(initial: LoginPayload) {
     };
 
     connect();
+    void poll();
     pollTimer = setInterval(() => {
       void poll();
     }, POLL_MS);
@@ -80,5 +70,5 @@ export function useDashboardPayload(initial: LoginPayload) {
     };
   }, []);
 
-  return payload;
+  return userName;
 }

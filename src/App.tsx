@@ -1,33 +1,17 @@
-import { BrowserRouter, Navigate, Outlet, Route, Routes, useLocation } from 'react-router-dom';
+import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import { AppShell } from '@/layout/AppShell';
 import { LoginScreen } from '@/LoginScreen';
 import { PreferencesProvider, ThemeProvider } from '@/theme/usePreferences';
-import { SessionProvider, useSession } from '@/session';
-import { useDashboardPayload } from '@/useDashboardPayload';
-import type { LoginPayload } from '@/loginPayload';
-
-function RequireAuth() {
-  const { user } = useSession();
-  const location = useLocation();
-  if (!user) {
-    return <Navigate to="/login" replace state={{ from: location.pathname }} />;
-  }
-  return <Outlet />;
-}
+import { useUserNameLive } from '@/useUserNameLive';
 
 function DashboardHome() {
-  const { user } = useSession();
-  const initial: LoginPayload = {
-    userName: user?.name ?? '',
-    message: '',
-    sentAt: '',
-  };
-  const payload = useDashboardPayload(initial);
+  const userName = useUserNameLive();
 
   return (
-    <div className="flex min-h-[40vh] flex-col items-center justify-center gap-2 px-6 text-center">
-      <h1 className="text-2xl font-semibold text-content-primary">Hi, {payload.userName}</h1>
-      {payload.message ? <p className="text-sm text-content-secondary">{payload.message}</p> : null}
+    <div className="flex min-h-[40vh] items-center justify-center px-6 text-center">
+      <h1 className="text-2xl font-semibold text-content-primary">
+        {userName ? `Hi, ${userName}` : 'Waiting for user_name…'}
+      </h1>
     </div>
   );
 }
@@ -36,13 +20,11 @@ function RoutedApp() {
   return (
     <Routes>
       <Route path="/login" element={<LoginScreen />} />
-      <Route path="/enterprise/login" element={<Navigate to="/login" replace />} />
-      <Route element={<RequireAuth />}>
-        <Route element={<AppShell />}>
-          <Route path="/" element={<DashboardHome />} />
-        </Route>
-        <Route path="*" element={<Navigate to="/" replace />} />
+      <Route element={<AppShell />}>
+        <Route path="/dashboard" element={<DashboardHome />} />
       </Route>
+      <Route path="/" element={<Navigate to="/dashboard" replace />} />
+      <Route path="*" element={<Navigate to="/dashboard" replace />} />
     </Routes>
   );
 }
@@ -51,11 +33,9 @@ export default function App() {
   return (
     <PreferencesProvider>
       <ThemeProvider>
-        <SessionProvider>
-          <BrowserRouter>
-            <RoutedApp />
-          </BrowserRouter>
-        </SessionProvider>
+        <BrowserRouter>
+          <RoutedApp />
+        </BrowserRouter>
       </ThemeProvider>
     </PreferencesProvider>
   );

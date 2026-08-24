@@ -1,5 +1,5 @@
 import axios, { isAxiosError } from 'axios';
-import type { LoginPayload } from '@/loginPayload';
+import type { UserNameData } from '@/loginPayload';
 
 function normalizeBaseUrl(url: string): string {
   const trimmed = url.trim().replace(/\/$/, '');
@@ -8,7 +8,6 @@ function normalizeBaseUrl(url: string): string {
   return `http://${trimmed}`;
 }
 
-/** In dev, use Vite proxy (same origin). In production, use API_BASE_URL from .env. */
 const configuredBase = normalizeBaseUrl(import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8081');
 export const API_BASE_URL = import.meta.env.DEV ? '' : configuredBase;
 
@@ -58,7 +57,7 @@ export function getApiErrorMessage(error: unknown): string {
       if (import.meta.env.DEV) {
         return `Network error — cannot reach API at ${target}. Start the server: cd server && npm run dev`;
       }
-      return `Cannot reach the API (${configuredBase}). Free hosting sleeps when idle and can take up to ~50 seconds to start — wait and click Continue again.`;
+      return `Cannot reach the API (${configuredBase}). Free hosting sleeps when idle and can take up to ~50 seconds to start — wait and try again.`;
     }
     return error.message;
   }
@@ -67,25 +66,25 @@ export function getApiErrorMessage(error: unknown): string {
   return 'Unknown error while calling the API';
 }
 
-function parsePayload(body: unknown): LoginPayload {
+function parseUserName(body: unknown): UserNameData {
   if (isHtmlResponse(body)) {
     throw new Error('Got HTML instead of API data. Redeploy the frontend so it points to the Render API.');
   }
-  const parsed = body as ApiResponse<LoginPayload>;
+  const parsed = body as ApiResponse<UserNameData>;
   if (!parsed || typeof parsed !== 'object' || !parsed.success || !parsed.data?.userName) {
-    throw new Error(parsed?.error ?? 'Failed to load dashboard data');
+    throw new Error(parsed?.error ?? 'Failed to load user name');
   }
-  return parsed.data;
+  return { userName: parsed.data.userName };
 }
 
-export async function sendLoginPayload(payload: LoginPayload): Promise<LoginPayload> {
-  const { data: body } = await api.post<ApiResponse<LoginPayload>>('/api/user-name', payload);
-  return parsePayload(body);
+export async function sendUserName(payload: UserNameData): Promise<UserNameData> {
+  const { data: body } = await api.post<ApiResponse<UserNameData>>('/api/user-name', payload);
+  return parseUserName(body);
 }
 
-export async function fetchLoginPayload(): Promise<LoginPayload> {
-  const { data: body } = await api.get<ApiResponse<LoginPayload>>('/api/user-name');
-  return parsePayload(body);
+export async function fetchUserName(): Promise<UserNameData> {
+  const { data: body } = await api.get<ApiResponse<UserNameData>>('/api/user-name');
+  return parseUserName(body);
 }
 
 export function userNameStreamUrl(): string {

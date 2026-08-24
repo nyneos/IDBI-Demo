@@ -1,5 +1,3 @@
-export interface LoginPayload {
+export interface UserNameData {
   userName: string;
-  message: string;
-  sentAt: string;
 }

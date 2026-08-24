@@ -12,7 +12,7 @@ let loggedUserName = false;
 async function logInitialUserName(): Promise<void> {
   if (!isDatabaseReady() || loggedUserName) return;
   const userService = new UserService();
-  const payload = await userService.getPayload();
+  const payload = await userService.getUserName();
   loggedUserName = true;
   logger.info('Loaded user_name from app_settings', { userName: payload.userName });
 }
