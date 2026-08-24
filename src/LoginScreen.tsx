@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
 import { ArrowRight } from 'lucide-react';
 import { Button } from '@/layout/ui';
 import { getApiErrorMessage, sendUserName } from '@/lib/api';
