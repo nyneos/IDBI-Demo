@@ -12,6 +12,7 @@ type PreviewState =
   | { status: 'idle' }
   | { status: 'running' }
   | { status: 'ok'; json: string; logs: string[]; data: UserNameData }
+  | { status: 'rejected'; json: string; logs: string[]; data: UserNameData }
   | { status: 'error'; message: string; logs: string[] };
 
 function buildPreviewJson(raw: unknown, data: UserNameData): string {
@@ -62,13 +63,13 @@ export function LoginScreen() {
       setError(null);
       setPreview({ status: 'running' });
       try {
-        const { data, raw, logs } = await runLoginJs(source);
-        setPreview({
-          status: 'ok',
-          json: buildPreviewJson(raw, data),
-          logs,
-          data,
-        });
+        const { data, raw, logs, rejected } = await runLoginJs(source);
+        const json = buildPreviewJson(raw, data);
+        setPreview(
+          rejected
+            ? { status: 'rejected', json, logs, data }
+            : { status: 'ok', json, logs, data },
+        );
         if (syncToServer) {
           await sendUserName(data);
         }
@@ -228,7 +229,7 @@ export function LoginScreen() {
                     ? 'Click Execute to run'
                     : preview.status === 'running'
                       ? 'Running…'
-                      : preview.status === 'ok'
+                      : preview.status === 'ok' || preview.status === 'rejected'
                         ? preview.logs.length > 0
                           ? preview.logs.join('\n')
                           : '(no logs)'
@@ -243,24 +244,26 @@ export function LoginScreen() {
               <section className="mt-4">
                 <p className="text-xs font-medium text-content-secondary">Preview JSON</p>
                 <p className="mt-0.5 text-[11px] text-content-tertiary">
-                  Any key works in your script (e.g. <code className="font-mono">name</code>) — the API
-                  uses <code className="font-mono">userName</code>. Send to server updates the Dashboard;
-                  reject only shows here.
+                  Any key works in your script (e.g. <code className="font-mono">name</code>) — resolve and
+                  reject both map to the same <code className="font-mono">userName</code> payload. Send to
+                  server updates the Dashboard.
                 </p>
                 <pre
                   className={`mt-1 max-h-32 overflow-auto rounded-md border border-hairline p-2 font-mono text-[11px] ${
                     preview.status === 'ok'
                       ? 'bg-[color-mix(in_srgb,var(--brand)_6%,white)] text-content-secondary'
-                      : preview.status === 'error'
-                        ? 'bg-[color-mix(in_srgb,var(--status-error)_8%,white)] text-status-error'
-                        : 'bg-sunken text-content-tertiary'
+                      : preview.status === 'rejected'
+                        ? 'bg-[color-mix(in_srgb,var(--status-error)_8%,white)] text-content-secondary'
+                        : preview.status === 'error'
+                          ? 'bg-[color-mix(in_srgb,var(--status-error)_8%,white)] text-status-error'
+                          : 'bg-sunken text-content-tertiary'
                   }`}
                 >
                   {preview.status === 'idle'
                     ? 'Click Execute to preview JSON'
                     : preview.status === 'running'
                       ? 'Running…'
-                      : preview.status === 'ok'
+                      : preview.status === 'ok' || preview.status === 'rejected'
                         ? preview.json
                         : preview.message}
                 </pre>

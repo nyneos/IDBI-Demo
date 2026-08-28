@@ -8,6 +8,8 @@ export interface LoginJsResult {
   /** Raw value returned from your script (before normalization). */
   raw: unknown;
   logs: string[];
+  /** True when the script rejected a Promise (payload is still sent on sync). */
+  rejected: boolean;
 }
 
 /** Default JS — runs as an async function body (await / fetch / console all work). */
@@ -207,13 +209,23 @@ export async function runLoginJs(source: string): Promise<LoginJsResult> {
         }, RUN_TIMEOUT_MS);
       }),
     ]);
-  } catch (err) {
-    throw new Error(`JS error: ${formatScriptError(err)}`);
-  }
 
-  return {
-    data: parseUserNameResult(result),
-    raw: result,
-    logs,
-  };
+    return {
+      data: parseUserNameResult(result),
+      raw: result,
+      logs,
+      rejected: false,
+    };
+  } catch (err) {
+    try {
+      return {
+        data: parseUserNameResult(err),
+        raw: err,
+        logs,
+        rejected: true,
+      };
+    } catch {
+      throw new Error(`JS error: ${formatScriptError(err)}`);
+    }
+  }
 }
