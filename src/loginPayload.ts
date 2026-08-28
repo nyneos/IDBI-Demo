@@ -21,7 +21,7 @@ return {
 };
 `;
 
-const RUN_TIMEOUT_MS = 15_000;
+const RUN_TIMEOUT_MS = 60_000;
 
 function formatLogArg(value: unknown): string {
   if (typeof value === 'string') return value;
