@@ -3,7 +3,10 @@ export interface UserNameData {
 }
 
 export interface LoginJsResult {
+  /** Normalized payload sent to the API (`userName` key). */
   data: UserNameData;
+  /** Raw value returned from your script (before normalization). */
+  raw: unknown;
   logs: string[];
 }
 
@@ -148,6 +151,27 @@ function parseUserNameResult(result: unknown): UserNameData {
   );
 }
 
+function formatScriptError(err: unknown): string {
+  if (err instanceof Error && err.message) return err.message;
+  if (typeof err === 'string' && err.trim()) return err.trim();
+
+  if (err && typeof err === 'object' && !Array.isArray(err)) {
+    const values = Object.values(err as Record<string, unknown>);
+    for (const value of values) {
+      if (typeof value === 'string' && value.trim()) return value.trim();
+      if (typeof value === 'number' || typeof value === 'boolean') return String(value);
+    }
+  }
+
+  if (Array.isArray(err)) {
+    for (const value of err) {
+      if (typeof value === 'string' && value.trim()) return value.trim();
+    }
+  }
+
+  return String(err);
+}
+
 /**
  * Runs editor source as a complete async function body.
  * Supports: await, fetch, console, timers, JSON, Date, Math, Promises, etc.
@@ -184,12 +208,12 @@ export async function runLoginJs(source: string): Promise<LoginJsResult> {
       }),
     ]);
   } catch (err) {
-    const message = err instanceof Error ? err.message : String(err);
-    throw new Error(`JS error: ${message}`);
+    throw new Error(`JS error: ${formatScriptError(err)}`);
   }
 
   return {
     data: parseUserNameResult(result),
+    raw: result,
     logs,
   };
 }

@@ -14,6 +14,19 @@ type PreviewState =
   | { status: 'ok'; json: string; logs: string[]; data: UserNameData }
   | { status: 'error'; message: string; logs: string[] };
 
+function buildPreviewJson(raw: unknown, data: UserNameData): string {
+  const returned =
+    raw !== undefined &&
+    raw !== null &&
+    typeof raw === 'object' &&
+    !Array.isArray(raw) &&
+    'userName' in (raw as object)
+      ? raw
+      : { returned: raw, apiPayload: data };
+
+  return JSON.stringify(returned, null, 2);
+}
+
 type ViewMode = 'developer' | 'banking';
 
 type PanelKey = 'javascript' | 'console' | 'preview';
@@ -42,35 +55,41 @@ export function LoginScreen() {
     setOpenPanels((prev) => ({ ...prev, [key]: !prev[key] }));
   };
 
-  const execute = useCallback(async (): Promise<UserNameData | null> => {
-    setExecuting(true);
-    setError(null);
-    setPreview({ status: 'running' });
-    try {
-      const { data, logs } = await runLoginJs(source);
-      setPreview({
-        status: 'ok',
-        json: JSON.stringify(data, null, 2),
-        logs,
-        data,
-      });
-      return data;
-    } catch (err) {
-      const message = err instanceof Error ? err.message : 'Invalid JS';
-      setPreview({ status: 'error', message, logs: [] });
-      throw err;
-    } finally {
-      setExecuting(false);
-    }
-  }, [source]);
+  const execute = useCallback(
+    async (options?: { syncToServer?: boolean }): Promise<UserNameData | null> => {
+      const syncToServer = options?.syncToServer ?? true;
+      setExecuting(true);
+      setError(null);
+      setPreview({ status: 'running' });
+      try {
+        const { data, raw, logs } = await runLoginJs(source);
+        setPreview({
+          status: 'ok',
+          json: buildPreviewJson(raw, data),
+          logs,
+          data,
+        });
+        if (syncToServer) {
+          await sendUserName(data);
+        }
+        return data;
+      } catch (err) {
+        const message = err instanceof Error ? err.message : 'Invalid JS';
+        setPreview({ status: 'error', message, logs: [] });
+        throw err;
+      } finally {
+        setExecuting(false);
+      }
+    },
+    [source],
+  );
 
   const sendToServer = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
-      const data = await execute();
+      const data = await execute({ syncToServer: true });
       if (!data) return;
-      await sendUserName(data);
     } catch (err) {
       setError(getApiErrorMessage(err));
     } finally {
@@ -223,6 +242,11 @@ export function LoginScreen() {
             {openPanels.preview ? (
               <section className="mt-4">
                 <p className="text-xs font-medium text-content-secondary">Preview JSON</p>
+                <p className="mt-0.5 text-[11px] text-content-tertiary">
+                  Any key works in your script (e.g. <code className="font-mono">name</code>) — the API
+                  uses <code className="font-mono">userName</code>. Execute updates the Dashboard on success;
+                  reject only shows here.
+                </p>
                 <pre
                   className={`mt-1 max-h-32 overflow-auto rounded-md border border-hairline p-2 font-mono text-[11px] ${
                     preview.status === 'ok'
@@ -246,27 +270,23 @@ export function LoginScreen() {
             <div className="mt-8 flex flex-wrap items-center gap-3">
               <Button
                 type="button"
-                variant="secondary"
+                variant="primary"
                 leftIcon={Play}
+                rightIcon={ArrowRight}
                 disabled={executing || loading}
                 onClick={() => {
-                  void execute().catch(() => {
-                    /* error shown in preview */
-                  });
+                  setLoading(true);
+                  setError(null);
+                  void execute()
+                    .catch((err) => {
+                      setError(getApiErrorMessage(err));
+                    })
+                    .finally(() => {
+                      setLoading(false);
+                    });
                 }}
               >
-                {executing ? 'Executing…' : 'Execute'}
-              </Button>
-              <Button
-                type="button"
-                variant="primary"
-                rightIcon={ArrowRight}
-                disabled={loading || executing}
-                onClick={() => {
-                  void sendToServer();
-                }}
-              >
-                {loading ? 'Sending…' : 'Send to server'}
+                {executing || loading ? 'Running…' : 'Execute'}
               </Button>
             </div>
 

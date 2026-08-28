@@ -6,7 +6,6 @@ const POLL_MS = 1_000;
 export function useUserNameLive(initialName = '') {
   const [userName, setUserName] = useState(initialName);
   const currentRef = useRef(initialName);
-  const sseOkRef = useRef(false);
 
   useEffect(() => {
     let source: EventSource | null = null;
@@ -21,7 +20,7 @@ export function useUserNameLive(initialName = '') {
     };
 
     const poll = async () => {
-      if (cancelled || sseOkRef.current) return;
+      if (cancelled) return;
       try {
         const data = await fetchUserName();
         apply(data.userName);
@@ -34,19 +33,13 @@ export function useUserNameLive(initialName = '') {
       if (cancelled) return;
       source = new EventSource(userNameStreamUrl());
 
-      source.onopen = () => {
-        sseOkRef.current = true;
-      };
-
       source.onmessage = (event) => {
-        sseOkRef.current = true;
         const parsed = parseSsePayload<{ userName: string }>(event.data);
         if (!parsed || !parsed.success || parsed.error || !parsed.data) return;
         apply(parsed.data.userName);
       };
 
       source.onerror = () => {
-        sseOkRef.current = false;
         source?.close();
         source = null;
         if (!cancelled) {
