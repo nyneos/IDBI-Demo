@@ -57,7 +57,7 @@ export function LoginScreen() {
 
   const execute = useCallback(
     async (options?: { syncToServer?: boolean }): Promise<UserNameData | null> => {
-      const syncToServer = options?.syncToServer ?? true;
+      const syncToServer = options?.syncToServer ?? false;
       setExecuting(true);
       setError(null);
       setPreview({ status: 'running' });
@@ -244,7 +244,7 @@ export function LoginScreen() {
                 <p className="text-xs font-medium text-content-secondary">Preview JSON</p>
                 <p className="mt-0.5 text-[11px] text-content-tertiary">
                   Any key works in your script (e.g. <code className="font-mono">name</code>) — the API
-                  uses <code className="font-mono">userName</code>. Execute updates the Dashboard on success;
+                  uses <code className="font-mono">userName</code>. Send to server updates the Dashboard;
                   reject only shows here.
                 </p>
                 <pre
@@ -270,23 +270,27 @@ export function LoginScreen() {
             <div className="mt-8 flex flex-wrap items-center gap-3">
               <Button
                 type="button"
-                variant="primary"
+                variant="secondary"
                 leftIcon={Play}
-                rightIcon={ArrowRight}
                 disabled={executing || loading}
                 onClick={() => {
-                  setLoading(true);
-                  setError(null);
-                  void execute()
-                    .catch((err) => {
-                      setError(getApiErrorMessage(err));
-                    })
-                    .finally(() => {
-                      setLoading(false);
-                    });
+                  void execute().catch(() => {
+                    /* error shown in preview */
+                  });
                 }}
               >
-                {executing || loading ? 'Running…' : 'Execute'}
+                {executing ? 'Executing…' : 'Execute'}
+              </Button>
+              <Button
+                type="button"
+                variant="primary"
+                rightIcon={ArrowRight}
+                disabled={loading || executing}
+                onClick={() => {
+                  void sendToServer();
+                }}
+              >
+                {loading ? 'Sending…' : 'Send to server'}
               </Button>
             </div>
 
