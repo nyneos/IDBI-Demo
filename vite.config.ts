@@ -6,7 +6,7 @@ import { fileURLToPath } from 'node:url';
 const rootDir = path.dirname(fileURLToPath(import.meta.url));
 
 const DEV_API = 'http://localhost:8081';
-const PROD_API = 'https://idbi-demo.onrender.com';
+const PROD_API = 'https://idbi-demo-3q8k.onrender.com';
 
 export default defineConfig(({ mode }) => {
   const apiBaseUrl = mode === 'development' ? DEV_API : PROD_API;
